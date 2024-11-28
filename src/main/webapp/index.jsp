@@ -1,11 +1,15 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/sql" prefix="sql" %>
+
 <%@ page import="jakarta.servlet.http.HttpSession" %>
 <%
     String username = (String) session.getAttribute("username");
 
-    if (username == null) {
-        response.sendRedirect("login.jsp");
-        return;
-    }
+//    if (username == null) {
+//        response.sendRedirect("login.jsp");
+//        return;
+//    }
 %>
 
 
@@ -14,7 +18,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grid Layout with Images</title>
+    <title>Wallpaper_Site</title>
     <style>
         body {
             margin: 0;
@@ -81,7 +85,6 @@
 </head>
 <body>
 
-    <!-- Navbar -->
     <header>
     <div class="navbar">
         <div class="links">
@@ -92,40 +95,31 @@
             <a href="#">Forums</a>
         </div>
         <div class="user">
+            <% if (username == null) { %>
+            <a class="login" href="login.jsp">Login</a>
+            <% } else { %>
             <span><%= username %></span> <a class="logout" href="logout.jsp">Logout</a>
+            <% } %>
+
         </div>
     </div>
         </header>
+    <sql:setDataSource var="dataSource"
+                       driver="com.mysql.cj.jdbc.Driver"
+                       url="jdbc:mysql://localhost:3306/wallpaper_shop?useSSL=false&serverTimezone=UTC"
+                       user="root"
+                       password="admin" />
 
-
-    <!-- Grid container -->
+    <sql:query dataSource="${dataSource}" var="result">
+        SELECT * FROM images;
+    </sql:query>
     <div class="grid-container">
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=1" alt="Random Image 1"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=2" alt="Random Image 2"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=3" alt="Random Image 3"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=4" alt="Random Image 4"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=5" alt="Random Image 5"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=6" alt="Random Image 6"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=7" alt="Random Image 7"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=8" alt="Random Image 8"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=9" alt="Random Image 9"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=10" alt="Random Image 10"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=11" alt="Random Image 11"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=12" alt="Random Image 12"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=13" alt="Random Image 13"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=14" alt="Random Image 14"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=15" alt="Random Image 15"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=16" alt="Random Image 16"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=17" alt="Random Image 17"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=18" alt="Random Image 18"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=19" alt="Random Image 19"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=20" alt="Random Image 20"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=21" alt="Random Image 21"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=22" alt="Random Image 22"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=23" alt="Random Image 23"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=24" alt="Random Image 24"></div>
-        <div class="grid-item"><img src="https://picsum.photos/200/300?random=25" alt="Random Image 25"></div>
+    <c:forEach var="row" items="${result.rows}">
+        <div class="grid-item">
+            <p>${row.name}</p>
+            <img src="image?id=${row.id}" alt="${row.name}" style="max-width: 300px;"/>
+        </div>
+    </c:forEach>
     </div>
-
 </body>
 </html>

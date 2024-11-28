@@ -18,7 +18,6 @@ public class UpdateServlet extends HttpServlet {
         String newPassword = request.getParameter("password");
 
         try (Connection conn = DatabaseConnection.getConnection()) {
-            // Check if the email and username exist in the database
             String checkSql = "SELECT id FROM users WHERE username = ? AND email = ?";
             PreparedStatement checkStmt = conn.prepareStatement(checkSql);
             checkStmt.setString(1, username);
