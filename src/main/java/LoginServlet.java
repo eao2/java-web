@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,20 +18,30 @@ public class LoginServlet extends HttpServlet {
         String password = request.getParameter("password");
 
         try (Connection conn = DatabaseConnection.getConnection()) {
-            String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+            String sql = "SELECT id, password FROM users WHERE username = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, username);
-            stmt.setString(2, password);
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                HttpSession session = request.getSession();
-                session.setAttribute("username", username);
-                response.sendRedirect("index.jsp");
+                int userId = rs.getInt("id");
+                String storedHashedPassword = rs.getString("password");
+
+                String hashedPassword = PasswordUtil.hashPassword(password);
+
+                if (storedHashedPassword.equals(hashedPassword)) {
+                    HttpSession session = request.getSession();
+                    session.setAttribute("userId", userId);
+                    session.setAttribute("username", username);
+
+                    response.sendRedirect("index.jsp");
+                } else {
+                    response.sendRedirect("login.jsp?error=PasswordIncorrect");
+                }
             } else {
-                response.sendRedirect("login.jsp?error=PasswordIncorrect");
+                response.sendRedirect("login.jsp?error=UserNotFound");
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NoSuchAlgorithmException e) {
             e.printStackTrace();
             response.sendRedirect("login.jsp");
         }

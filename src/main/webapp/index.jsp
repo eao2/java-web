@@ -91,7 +91,7 @@
             <a href="#">Latest</a>
             <a href="#">Toplist</a>
             <a href="#">Random</a>
-            <a href="#">Upload</a>
+            <a href="/upload-image.jsp">Upload</a>
             <a href="#">Forums</a>
         </div>
         <div class="user">

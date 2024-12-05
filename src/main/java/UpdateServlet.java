@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,9 +27,11 @@ public class UpdateServlet extends HttpServlet {
             ResultSet rs = checkStmt.executeQuery();
 
             if (rs.next()) {
+                String hashedPassword = PasswordUtil.hashPassword(newPassword);
+
                 String updateSql = "UPDATE users SET password = ? WHERE username = ? AND email = ?";
                 PreparedStatement updateStmt = conn.prepareStatement(updateSql);
-                updateStmt.setString(1, newPassword);
+                updateStmt.setString(1, hashedPassword);
                 updateStmt.setString(2, username);
                 updateStmt.setString(3, email);
 
@@ -41,7 +44,7 @@ public class UpdateServlet extends HttpServlet {
             } else {
                 response.sendRedirect("update.jsp?error=userNotFound");
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NoSuchAlgorithmException e) {
             e.printStackTrace();
             response.sendRedirect("update.jsp?error=sqlError");
         }

@@ -1,10 +1,8 @@
 import java.io.IOException;
-import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Base64;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -13,72 +11,59 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet("/image")
 public class ImageServlet extends HttpServlet {
-    private static final String IMAGE_QUERY = "SELECT image FROM images WHERE id = ?";
+    private static final String IMAGE_QUERY = "SELECT low_res, medium_res, high_res FROM images WHERE id = ?";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         String id = request.getParameter("id");
+        String resolution = request.getParameter("res");
+
         if (id == null || id.trim().isEmpty()) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Image ID is required");
             return;
         }
 
-        Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet resultSet = null;
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(IMAGE_QUERY)) {
 
-        try {
-            connection = DatabaseConnection.getConnection();
-            statement = connection.prepareStatement(IMAGE_QUERY);
-            statement.setString(1, id);
+            // Ensure id is parsed as an integer
+            int imageId = Integer.parseInt(id);
+            statement.setInt(1, imageId);
 
-            resultSet = statement.executeQuery();
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    byte[] imageData = null;
 
-            if (resultSet.next()) {
-                String base64Image = resultSet.getString("image");
-
-                if (base64Image != null && !base64Image.trim().isEmpty()) {
-                    String[] parts = base64Image.split(",", 2);
-                    String mimeType = "image/jpeg"; // Default to JPEG
-                    String base64Data = base64Image;
-
-                    if (parts.length == 2) {
-                        mimeType = parts[0].split(":")[1].split(";")[0];
-                        base64Data = parts[1];
+                    // Determine which resolution to serve
+                    if ("medium".equals(resolution)) {
+                        imageData = rs.getBytes("medium_res");
+                    } else if ("high".equals(resolution)) {
+                        imageData = rs.getBytes("high_res");
+                    } else {
+                        imageData = rs.getBytes("low_res");
                     }
 
-                    byte[] imageData = Base64.getDecoder().decode(base64Data);
+                    if (imageData != null && imageData.length > 0) {
+                        // Set content type to PNG
+                        response.setContentType("image/png");
+                        response.setContentLength(imageData.length);
 
-                    response.setContentType(mimeType);
-                    response.setContentLength(imageData.length);
-
-                    try (OutputStream out = response.getOutputStream()) {
-                        out.write(imageData);
+                        // Write image data directly to response output stream
+                        response.getOutputStream().write(imageData);
+                        response.getOutputStream().flush();
+                    } else {
+                        response.sendError(HttpServletResponse.SC_NOT_FOUND, "Image data is empty");
                     }
                 } else {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "Image data is empty");
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "Image not found");
                 }
-            } else {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Image not found");
             }
-        } catch (IllegalArgumentException e) {
-            getServletContext().log("Error decoding Base64 image", e);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "Invalid image data format");
+        } catch (NumberFormatException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid image ID");
         } catch (SQLException e) {
-            getServletContext().log("Database error retrieving image", e);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "Database error: " + e.getMessage());
-        } finally {
-            try {
-                if (resultSet != null) resultSet.close();
-                if (statement != null) statement.close();
-                if (connection != null) connection.close();
-            } catch (SQLException e) {
-                getServletContext().log("Error closing database resources", e);
-            }
+            log("Database error", e);
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
         }
     }
 }

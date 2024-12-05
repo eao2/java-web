@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -16,16 +17,20 @@ public class SignupServlet extends HttpServlet {
         String password = request.getParameter("password");
 
         try (Connection conn = DatabaseConnection.getConnection()) {
+            String hashedPassword = PasswordUtil.hashPassword(password);
+
             String sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, username);
             stmt.setString(2, email);
-            stmt.setString(3, password);
+            stmt.setString(3, hashedPassword);
             stmt.executeUpdate();
+
             response.sendRedirect("login.jsp");
-        } catch (SQLException e) {
+        } catch (SQLException | NoSuchAlgorithmException e) {
             e.printStackTrace();
             response.sendRedirect("signup.jsp");
         }
     }
 }
+
