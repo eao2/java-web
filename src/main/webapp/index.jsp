@@ -27,36 +27,6 @@
             color: #fff;
         }
 
-        /* Navbar */
-        header{
-            background-color: #1e1e1e;
-            width: 100vw;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 100;
-        }
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0px;
-            max-width: 960px;
-            height: 5rem;
-            margin: auto;
-        }
-
-        .navbar a {
-            color: #fff;
-            text-decoration: none;
-            margin: 0 15px;
-            font-size: 16px;
-        }
-
-        .navbar .logout {
-            color: #ff4d4d;
-        }
-
         /* Grid container */
         .grid-container {
             display: grid;
@@ -66,6 +36,17 @@
             margin: 0 auto;
             max-width: 960px;
             margin-top: 6.5rem;
+            @media (max-width: 1024px) {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            @media (max-width: 768px) {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            @media (max-width: 480px) {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         .grid-item {
@@ -84,27 +65,8 @@
     </style>
 </head>
 <body>
-
-    <header>
-    <div class="navbar">
-        <div class="links">
-            <a href="#">Latest</a>
-            <a href="#">Toplist</a>
-            <a href="#">Random</a>
-            <a href="/upload-image.jsp">Upload</a>
-            <a href="#">Forums</a>
-        </div>
-        <div class="user">
-            <% if (username == null) { %>
-            <a class="login" href="login.jsp">Login</a>
-            <% } else { %>
-            <span><%= username %></span> <a class="logout" href="logout.jsp">Logout</a>
-            <% } %>
-
-        </div>
-    </div>
-        </header>
-    <sql:setDataSource var="dataSource"
+<jsp:include page="components/Header.jsp" />
+<sql:setDataSource var="dataSource"
                        driver="com.mysql.cj.jdbc.Driver"
                        url="jdbc:mysql://localhost:3306/wallpaper_shop?useSSL=false&serverTimezone=UTC"
                        user="root"

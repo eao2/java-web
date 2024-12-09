@@ -3,6 +3,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -13,6 +14,7 @@ import java.sql.SQLException;
 
 @WebServlet("/UpdateServlet")
 public class UpdateServlet extends HttpServlet {
+    private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String username = request.getParameter("username");
         String email = request.getParameter("email");
@@ -27,7 +29,7 @@ public class UpdateServlet extends HttpServlet {
             ResultSet rs = checkStmt.executeQuery();
 
             if (rs.next()) {
-                String hashedPassword = PasswordUtil.hashPassword(newPassword);
+                String hashedPassword = passwordEncoder.encode(newPassword);
 
                 String updateSql = "UPDATE users SET password = ? WHERE username = ? AND email = ?";
                 PreparedStatement updateStmt = conn.prepareStatement(updateSql);
@@ -44,7 +46,7 @@ public class UpdateServlet extends HttpServlet {
             } else {
                 response.sendRedirect("update.jsp?error=userNotFound");
             }
-        } catch (SQLException | NoSuchAlgorithmException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
             response.sendRedirect("update.jsp?error=sqlError");
         }

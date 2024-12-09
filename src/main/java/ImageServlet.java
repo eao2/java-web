@@ -27,7 +27,6 @@ public class ImageServlet extends HttpServlet {
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(IMAGE_QUERY)) {
 
-            // Ensure id is parsed as an integer
             int imageId = Integer.parseInt(id);
             statement.setInt(1, imageId);
 
@@ -35,7 +34,6 @@ public class ImageServlet extends HttpServlet {
                 if (rs.next()) {
                     byte[] imageData = null;
 
-                    // Determine which resolution to serve
                     if ("medium".equals(resolution)) {
                         imageData = rs.getBytes("medium_res");
                     } else if ("high".equals(resolution)) {
@@ -45,11 +43,9 @@ public class ImageServlet extends HttpServlet {
                     }
 
                     if (imageData != null && imageData.length > 0) {
-                        // Set content type to PNG
                         response.setContentType("image/png");
                         response.setContentLength(imageData.length);
 
-                        // Write image data directly to response output stream
                         response.getOutputStream().write(imageData);
                         response.getOutputStream().flush();
                     } else {
