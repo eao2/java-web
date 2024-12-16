@@ -42,12 +42,12 @@ public class UploadImageServlet extends HttpServlet {
         String priceStr = request.getParameter("price");
         Part imagePart = request.getPart("image");
 
-        if (name == null || tags == null || imagePart == null || priceStr == null) {
+        if (name == null || tags == null || imagePart == null || priceStr == null || imagePart.getSize() == 0) {
             response.sendRedirect("upload-image.jsp?error=MissingFields");
             return;
         }
 
-        BigDecimal price = null;
+        BigDecimal price;
         try {
             price = new BigDecimal(priceStr);
         } catch (NumberFormatException e) {
@@ -60,26 +60,32 @@ public class UploadImageServlet extends HttpServlet {
 
             BufferedImage originalImage = ImageIO.read(originalInputStream);
 
+            if (originalImage == null) {
+                response.sendRedirect("upload-image.jsp?error=InvalidImageFile");
+                return;
+            }
+
             BufferedImage lowResImage = resizeImage(originalImage, 360);
-            BufferedImage mediumResImage = resizeImage(originalImage, 720);
+            BufferedImage mediumResImage = resizeImage(originalImage, 1280);
 
             byte[] lowResBytes = convertImageToBytes(lowResImage, "jpeg");
             byte[] mediumResBytes = convertImageToBytes(mediumResImage, "jpeg");
             byte[] highResBytes = convertImageToBytes(originalImage, "png");
 
-            PreparedStatement stmt = conn.prepareStatement(INSERT_IMAGE_QUERY);
-            stmt.setInt(1, userId);
-            stmt.setString(2, name);
-            stmt.setBytes(3, lowResBytes);
-            stmt.setBytes(4, mediumResBytes);
-            stmt.setBytes(5, highResBytes);
-            stmt.setString(6, tags);
-            stmt.setBigDecimal(7, price);
-            stmt.executeUpdate();
+            try (PreparedStatement stmt = conn.prepareStatement(INSERT_IMAGE_QUERY)) {
+                stmt.setInt(1, userId);
+                stmt.setString(2, name);
+                stmt.setBytes(3, lowResBytes);
+                stmt.setBytes(4, mediumResBytes);
+                stmt.setBytes(5, highResBytes);
+                stmt.setString(6, tags);
+                stmt.setBigDecimal(7, price);
+                stmt.executeUpdate();
+            }
 
             response.sendRedirect("upload-image.jsp?success=ImageUploaded");
         } catch (SQLException e) {
-            e.printStackTrace();
+            log("Database error while uploading image", e);
             response.sendRedirect("upload-image.jsp?error=DatabaseError");
         }
     }
@@ -95,6 +101,7 @@ public class UploadImageServlet extends HttpServlet {
     private BufferedImage resizeImage(BufferedImage originalImage, int width) throws IOException {
         return Thumbnails.of(originalImage)
                 .width(width)
+                .outputFormat("jpeg")
                 .asBufferedImage();
     }
 

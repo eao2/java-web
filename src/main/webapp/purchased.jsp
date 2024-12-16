@@ -4,12 +4,13 @@
 
 <%@ page import="jakarta.servlet.http.HttpSession" %>
 <%
-    String username = (String) session.getAttribute("username");
+    //    HttpSession session = request.getSession(false);
+    Integer userId = (Integer) session.getAttribute("userId");
 
-//    if (username == null) {
-//        response.sendRedirect("login.jsp");
-//        return;
-//    }
+    if (userId == null) {
+        response.sendRedirect("login.jsp?error=PleaseLogin");
+        return;
+    }
 %>
 
 
@@ -83,7 +84,12 @@
                        password="admin" />
 
     <sql:query dataSource="${dataSource}" var="result">
-        SELECT * FROM images;
+        SELECT images.id, images.name, images.price, purchases.purchase_date
+        FROM purchases
+        JOIN images ON purchases.image_id = images.id
+        WHERE purchases.user_id = ?
+        ORDER BY purchases.purchase_date DESC;
+        <sql:param value="${userId}"/>
     </sql:query>
     <div class="grid-container">
     <c:forEach var="row" items="${result.rows}">
